@@ -180,6 +180,7 @@
 
   </style>
 
+  <!-- anire-testgate:head -->
   <meta name="robots" content="noindex, nofollow">
   <style>
     :root { --paper: #f6f0e1; --ink: #3c2d23; --soft: #8c735f; --red: #cd4646; --teal: #2f6f76; --line: #d9ccb0; }
@@ -213,6 +214,7 @@
     .ag-auto { background: #efe6d1; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
     .ag-hidden { display: none !important; }
   </style>
+  <!-- /anire-testgate:head -->
 </head>
 
 <body>
@@ -261,6 +263,7 @@
   </script>
 
 
+  <!-- anire-testgate:body -->
   <div id="anireGate" class="ag-wrap">
     <div class="ag-card">
       <h1>アンダードッグ・イレブン</h1>
@@ -387,6 +390,25 @@
       ['keydown', 'keyup', 'keypress', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'touchstart', 'touchend', 'wheel', 'click'].forEach(function (ev) {
         $(id).addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true });
       });
+    });
+
+    // 別の画面（ほかのアプリやタブ）から戻ってきたとき、音が止まったままにならないようにする。
+    //   ブラウザは裏に回ったページの音（AudioContext）を止める。Ren'Py は最初の1回しか再開しないので、
+    //   ページが見えたとき・画面に触れたときに、止まっていたら毎回再開する
+    function resumeAudio() {
+      try {
+        // Ren'Py の Web 版の音は renpyAudio.context（BGM・効果音・声）。念のため SDL2 の音も見る
+        [window.renpyAudio && window.renpyAudio.context,
+         window.Module && window.Module.SDL2 && window.Module.SDL2.audioContext].forEach(function (c) {
+          if (c && c.state !== 'running' && c.state !== 'closed') { c.resume(); }
+        });
+      } catch (e) {}
+    }
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) resumeAudio(); });
+    window.addEventListener('pageshow', resumeAudio);
+    window.addEventListener('focus', resumeAudio);
+    ['touchstart', 'touchend', 'pointerdown', 'mousedown', 'keydown'].forEach(function (ev) {
+      document.addEventListener(ev, resumeAudio, true);
     });
 
     function norm(c) { return String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
@@ -572,6 +594,7 @@
     start();
   })();
   </script>
+  <!-- /anire-testgate:body -->
 </body>
 
 </html>
