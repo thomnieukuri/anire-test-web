@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>アンダードッグ・イレブン 体験版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials" />
+  <link rel="icon" href="icons/icon-72x72.png" sizes="72x72" type="image/png" />
+  <link rel="icon" href="icons/icon-96x96.png" sizes="96x96" type="image/png" />
+  <link rel="icon" href="icons/icon-128x128.png" sizes="128x128" type="image/png" />
+  <link rel="icon" href="icons/icon-144x144.png" sizes="144x144" type="image/png" />
+  <link rel="icon" href="icons/icon-152x152.png" sizes="152x152" type="image/png" />
+  <link rel="icon" href="icons/icon-192x192.png" sizes="192x192" type="image/png" />
+  <link rel="icon" href="icons/icon-384x384.png" sizes="384x384" type="image/png" />
+  <link rel="icon" href="icons/icon-512x512.png" sizes="512x512" type="image/png" />
+  <!-- ios support -->
+  <link rel="apple-touch-icon" href="icons/icon-72x72.png" sizes="72x72" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-96x96.png" sizes="96x96" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-128x128.png" sizes="128x128" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-144x144.png" sizes="144x144" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-152x152.png" sizes="152x152" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-384x384.png" sizes="384x384" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-512x512.png" sizes="512x512" type="image/png" />
+
+  <meta name="theme-color" content="#000" />
+
+  <style>
+    html {
+      background: #444;
+      font-family: sans-serif;
+    }
+
+    body, html {
+      overscroll-behavior: none;
+    }
+
+    #canvas, #overlayDiv {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+
+      width: 100%;
+      height: 100%;
+
+      border: 0 none;
+    }
+
+    #canvas {
+      background: #000;
+    }
+
+    .visible {
+      visibility: visible;
+      opacity: 1.0;
+      transition: opacity .1s linear;
+    }
+
+    .hidden {
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0s .25s, opacity .25s linear;
+    }
+
+    #statusDiv, #inputDiv {
+      background: rgba(0, 0, 0, 0.75);
+      width: 50%;
+      margin: auto;
+      min-width: 340px;
+      padding: 10px;
+
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+
+      border-radius: 0 0 5px 5px;
+    }
+
+    #statusTextDiv {
+      overflow: auto;
+      max-height: 40vh;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #statusProgress {
+      display: none;
+      width: 100%;
+    }
+
+    #inputDiv {
+      width: 65%;
+      padding-left: 10px;
+      padding-right: 20px;
+    }
+
+    #inputPrompt {
+      color: #eee;
+      font-size: 150%;
+      margin-bottom: 1em;
+      margin-top: 1em;
+
+    }
+
+    #inputText {
+      width: 100%;
+      font-size: 175%;
+      padding: 5px;
+      background: inherit;
+      color: #eee;
+    }
+
+    #inputText:focus {
+      color: #ffffff;
+    }
+
+    #ContextContainer {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      color: white;
+    }
+
+    #ContextContainer.shown {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 0px 0px 5px 0px;
+    }
+
+    #ContextButton {
+      text-decoration: none;
+      color: lightgrey;
+      font-size: xx-large;
+      cursor: pointer;
+      user-select: none;
+      -moz-user-select: none;
+      padding: 10px 10px;
+      opacity: .75;
+    }
+
+    #ContextButton:focus {
+      outline: none;
+      color: #ffffff;
+      opacity: 1.0;
+    }
+
+    #ContextMenu a {
+      text-decoration: none;
+      color: lightgrey;
+      background: #444;
+      height: 48px;
+      width: 250px;
+      border-radius: 5px;
+      border: 1px solid lightgrey;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 5px 5px;
+      opacity: 1.0;
+    }
+
+    #ContextMenu a:hover {
+      text-decoration: none;
+      background: #666666;
+      color: #ffffff
+    }
+
+    #presplash {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: block;
+        margin: auto;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+  </style>
+
+  <!-- anire-testgate:head -->
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root { --paper: #f6f0e1; --ink: #3c2d23; --soft: #8c735f; --red: #cd4646; --teal: #2f6f76; --line: #d9ccb0; }
+    .ag-wrap { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+      background: rgba(20, 16, 12, .88); padding: 16px; box-sizing: border-box;
+      font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif; }
+    .ag-card { background: var(--paper); color: var(--ink); border-radius: 10px; width: 100%; max-width: 560px;
+      max-height: 100%; overflow-y: auto; box-sizing: border-box; padding: 26px 22px 22px; box-shadow: 0 8px 30px rgba(0,0,0,.4);
+      -webkit-overflow-scrolling: touch; }
+    .ag-card h1 { font-size: 22px; margin: 0 0 6px; text-align: center; }
+    .ag-card h2 { font-size: 16px; margin: 22px 0 8px; }
+    .ag-card p { font-size: 14px; line-height: 1.7; margin: 6px 0; }
+    .ag-sub { color: var(--soft); text-align: center; }
+    .ag-card input[type=text], .ag-card textarea, .ag-card select { width: 100%; box-sizing: border-box; font-size: 16px;
+      padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px; background: #fffdf7; color: var(--ink); font-family: inherit; }
+    .ag-card textarea { min-height: 76px; resize: vertical; line-height: 1.6; }
+    .ag-code { text-align: center; letter-spacing: .15em; text-transform: uppercase; font-size: 20px !important; }
+    .ag-btn { display: block; width: 100%; margin-top: 16px; padding: 13px; font-size: 17px; font-weight: bold; border: 0;
+      border-radius: 8px; background: var(--red); color: #fff; cursor: pointer; font-family: inherit; }
+    .ag-btn.sub { background: transparent; color: var(--ink); border: 1.5px solid var(--line); font-weight: normal; margin-top: 10px; }
+    .ag-btn:disabled { opacity: .5; }
+    .ag-err { color: var(--red); font-size: 14px; min-height: 1.4em; text-align: center; }
+    .ag-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ag-pills label { flex: 1 1 auto; text-align: center; }
+    .ag-pills input { position: absolute; opacity: 0; pointer-events: none; }
+    .ag-pills span { display: block; padding: 9px 10px; border: 1.5px solid var(--line); border-radius: 999px; font-size: 14px;
+      background: #fffdf7; cursor: pointer; white-space: nowrap; }
+    .ag-pills input:checked + span { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .ag-pills input:focus-visible + span { outline: 2px solid var(--teal); outline-offset: 2px; }
+    .ag-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--soft); margin-top: 4px; }
+    .ag-auto { background: #efe6d1; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+    .ag-hidden { display: none !important; }
+  </style>
+  <!-- /anire-testgate:head -->
+</head>
+
+<body>
+  <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+  <div id="overlayDiv"></div>
+
+  <img id="presplash" src="web-presplash.jpg">
+
+  <div id="ContextContainer">
+    <a id="ContextButton">&#8801;</a><br />
+    <div id="ContextMenu" style="display: none;">
+      <input id="ID_SavegamesImport" type="file" onchange="onSavegamesImport(this)" accept="application/zip"
+        style=display:none></input>
+      <a href="javascript:document.getElementById('ID_SavegamesImport').click();">Import Saves</a>
+      <a href="javascript:onSavegamesExport();">Export Saves</a>
+      <a href="javascript:FSDownload('/log.txt', 'text/plain');">Download Log</a>
+      <a href="https://www.renpy.org/" target="_blank">
+          Powered by Ren'Py
+      </a>
+      </span>
+    </div>
+  </div>
+
+  <div id="statusDiv" class="hidden">
+    <div id="statusTextDiv"></div>
+    <progress id="statusProgress" value="0" max="100"></progress>
+  </div>
+
+  <div id="inputDiv" class="hidden">
+    <form id="inputForm">
+      <div id="inputPrompt"></div>
+      <input id="inputText" type="text">
+    </form>
+  </div>
+
+  <script>
+      // The URL to game.zip, relative to the URL of this file.
+      window.gameZipURL = 'game.zip';
+
+      // Register the service worker.
+      if (navigator.serviceWorker) {
+          if (!navigator.serviceWorker.controller) {
+              navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'all' });
+          }
+      }
+  </script>
+
+
+  <!-- anire-testgate:body -->
+  <div id="anireGate" class="ag-wrap">
+    <div class="ag-card">
+      <h1>アンダードッグ・イレブン</h1>
+      <p class="ag-sub">テストプレイ用のページです</p>
+      <div id="agGateForm">
+        <p>招待コードを入れてください。</p>
+        <input id="agCode" class="ag-code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX">
+        <div id="agGateErr" class="ag-err"></div>
+        <button id="agGateBtn" class="ag-btn" type="button">はじめる</button>
+        <p class="ag-sub" style="margin-top:14px">テストの期間：12月31日まで<br>このページのことは、ほかの人には教えないでね</p>
+      </div>
+      <div id="agGateOver" class="ag-hidden">
+        <p style="text-align:center">テストの期間（12月31日まで）は終わりました。<br>遊んでくれて、ありがとうございました！</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="anireSurvey" class="ag-wrap ag-hidden">
+    <div class="ag-card">
+      <div id="agSurveyForm">
+        <h1>アンケート</h1>
+        <p class="ag-sub">3分くらい。答えたくないところは空けたままで大丈夫です</p>
+
+        <h2>1. 体験版はおもしろかった？</h2>
+        <div class="ag-pills" data-q="おもしろさ">
+          <label><input type="radio" name="q1" value="5"><span>5</span></label>
+          <label><input type="radio" name="q1" value="4"><span>4</span></label>
+          <label><input type="radio" name="q1" value="3"><span>3</span></label>
+          <label><input type="radio" name="q1" value="2"><span>2</span></label>
+          <label><input type="radio" name="q1" value="1"><span>1</span></label>
+        </div>
+        <div class="ag-scale"><span>5 とてもおもしろい</span><span>1 つまらない</span></div>
+
+        <h2>2. いちばん好きなキャラは？</h2>
+        <select name="q2">
+          <option value="">えらんでください</option>
+          <option>蓮</option><option>ひなた</option><option>千夏</option><option>紗希</option>
+          <option>三好</option><option>鷹野</option><option>大門</option><option>坂口</option><option>神城</option>
+          <option>黒田先生</option><option>そのほか</option>
+        </select>
+
+        <h2>3. いちばん気になるヒロインは？</h2>
+        <div class="ag-pills">
+          <label><input type="radio" name="q3" value="ひなた"><span>ひなた</span></label>
+          <label><input type="radio" name="q3" value="千夏"><span>千夏</span></label>
+          <label><input type="radio" name="q3" value="紗希"><span>紗希</span></label>
+          <label><input type="radio" name="q3" value="まだ決められない"><span>まだ決められない</span></label>
+        </div>
+
+        <h2>4. 退屈だった・長いと感じたところは？</h2>
+        <textarea name="q4" placeholder="例：○章の△△の場面が長かった"></textarea>
+
+        <h2>5. わかりにくかったところは？</h2>
+        <textarea name="q5" placeholder="話の流れ、サッカーの場面、操作など、なんでも"></textarea>
+
+        <h2>6. 文章は読みやすかった？</h2>
+        <div class="ag-pills">
+          <label><input type="radio" name="q6" value="読みやすい"><span>読みやすい</span></label>
+          <label><input type="radio" name="q6" value="ふつう"><span>ふつう</span></label>
+          <label><input type="radio" name="q6" value="読みにくい"><span>読みにくい</span></label>
+        </div>
+
+        <h2>7. 話のテンポは？</h2>
+        <div class="ag-pills">
+          <label><input type="radio" name="q7" value="ちょうどいい"><span>ちょうどいい</span></label>
+          <label><input type="radio" name="q7" value="ゆっくりすぎる"><span>ゆっくりすぎる</span></label>
+          <label><input type="radio" name="q7" value="速すぎる"><span>速すぎる</span></label>
+        </div>
+
+        <h2>8. 絵や音で、よかったところ・気になったところは？</h2>
+        <textarea name="q8"></textarea>
+
+        <h2>9. 続き（製品版）が出たら、買いたい？</h2>
+        <div class="ag-pills">
+          <label><input type="radio" name="q9" value="ぜひ買う"><span>ぜひ買う</span></label>
+          <label><input type="radio" name="q9" value="たぶん買う"><span>たぶん買う</span></label>
+          <label><input type="radio" name="q9" value="わからない"><span>わからない</span></label>
+          <label><input type="radio" name="q9" value="たぶん買わない"><span>たぶん買わない</span></label>
+          <label><input type="radio" name="q9" value="買わない"><span>買わない</span></label>
+        </div>
+
+        <h2>10. 続きが 1,500円 だったら？</h2>
+        <div class="ag-pills">
+          <label><input type="radio" name="q10" value="安い"><span>安い</span></label>
+          <label><input type="radio" name="q10" value="ちょうどいい"><span>ちょうどいい</span></label>
+          <label><input type="radio" name="q10" value="少し高い"><span>少し高い</span></label>
+          <label><input type="radio" name="q10" value="高い"><span>高い</span></label>
+        </div>
+
+        <h2>11. ほかに、なんでも（よかったところも、ぜひ）</h2>
+        <textarea name="q11"></textarea>
+
+        <h2>自動でいっしょに送られる情報</h2>
+        <div id="agAuto" class="ag-auto"></div>
+
+        <div id="agSendErr" class="ag-err" style="margin-top:12px"></div>
+        <button id="agSend" class="ag-btn" type="button">送信する</button>
+        <button id="agCopy" class="ag-btn sub ag-hidden" type="button">送れないときは：内容をコピー（LINE などで送ってね）</button>
+        <button id="agClose" class="ag-btn sub" type="button">あとで答える（閉じる）</button>
+      </div>
+      <div id="agThanks" class="ag-hidden">
+        <h1>ありがとうございました！</h1>
+        <p class="ag-sub">いただいた感想は、製品版づくりに使わせてもらいます。</p>
+        <button id="agThanksClose" class="ag-btn" type="button">ゲームにもどる</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var HASHES = {"16650ed450d72ce5ddcd7c652582e60e751298c9f322f3b27c2c564da4241258": "T0"};
+    var LAST = new Date('2099-12-31T23:59:59+09:00').getTime();
+    var KEY = '8d04e3ef-110c-47fe-b9fd-363917fec5fa';
+    var LS = {
+      get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+      set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+      del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+    };
+    var $ = function (id) { return document.getElementById(id); };
+    var tester = '';
+
+    // ゲーム（Ren'Py）にキー入力やタップが届かないようにする（入力欄で文字が打てるように）
+    ['anireGate', 'anireSurvey'].forEach(function (id) {
+      ['keydown', 'keyup', 'keypress', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'touchstart', 'touchend', 'wheel', 'click'].forEach(function (ev) {
+        $(id).addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true });
+      });
+    });
+
+    // 別の画面（ほかのアプリやタブ）から戻ってきたとき、音が止まったままにならないようにする。
+    //   ブラウザは裏に回ったページの音（AudioContext）を止める。Ren'Py は最初の1回しか再開しないので、
+    //   ページが見えたとき・画面に触れたときに、止まっていたら毎回再開する
+    function resumeAudio() {
+      try {
+        // Ren'Py の Web 版の音は renpyAudio.context（BGM・効果音・声）。念のため SDL2 の音も見る
+        [window.renpyAudio && window.renpyAudio.context,
+         window.Module && window.Module.SDL2 && window.Module.SDL2.audioContext].forEach(function (c) {
+          if (c && c.state !== 'running' && c.state !== 'closed') { c.resume(); }
+        });
+      } catch (e) {}
+    }
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) resumeAudio(); });
+    window.addEventListener('pageshow', resumeAudio);
+    window.addEventListener('focus', resumeAudio);
+    ['touchstart', 'touchend', 'pointerdown', 'mousedown', 'keydown'].forEach(function (ev) {
+      document.addEventListener(ev, resumeAudio, true);
+    });
+
+    function norm(c) { return String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+    async function check(c) {
+      c = norm(c);
+      if (c.length !== 8 || !(window.crypto && crypto.subtle)) return '';
+      var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('anire:' + c));
+      var hex = Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+      return HASHES[hex] || '';
+    }
+
+    function boot() {
+      $('anireGate').classList.add('ag-hidden');
+      var srcs = ['renpy-pre.js', 'renpy.js'];
+      (function next(i) {
+        if (i >= srcs.length) return;
+        var sc = document.createElement('script');
+        sc.src = srcs[i];
+        sc.onload = function () { next(i + 1); };
+        document.body.appendChild(sc);
+      })(0);
+    }
+
+    async function tryCode(c, remember) {
+      var t = await check(c);
+      if (!t) return false;
+      tester = t;
+      if (remember) LS.set('anire_code', norm(c));
+      boot();
+      return true;
+    }
+
+    async function start() {
+      if (Date.now() > LAST) {
+        $('agGateForm').classList.add('ag-hidden');
+        $('agGateOver').classList.remove('ag-hidden');
+        return;
+      }
+      var url = new URL(location.href);
+      var fromUrl = url.searchParams.get('c');
+      if (fromUrl) {
+        url.searchParams.delete('c');
+        history.replaceState(null, '', url.pathname + url.search + url.hash);
+        if (await tryCode(fromUrl, true)) return;
+      }
+      var saved = LS.get('anire_code');
+      if (saved && await tryCode(saved, false)) return;
+      $('agCode').focus();
+    }
+
+    async function onGate() {
+      $('agGateBtn').disabled = true;
+      var ok = await tryCode($('agCode').value, true);
+      if (!ok) $('agGateErr').textContent = 'コードがちがうみたいです。もう一度たしかめてください';
+      $('agGateBtn').disabled = false;
+    }
+    $('agGateBtn').addEventListener('click', onGate);
+    $('agCode').addEventListener('keydown', function (e) { if (e.key === 'Enter') onGate(); });
+
+    // ---- アンケート ----
+    var info = null;
+    var CH = { prologue: 'プロローグ', chapter1: '第1章', chapter2: '第2章', chapter3: '第3章', trial_end: '最後まで' };
+    function fmt(sec) {
+      var m = Math.floor(sec / 60);
+      if (m < 1) return '1分未満';
+      return m < 60 ? m + '分' : Math.floor(m / 60) + '時間' + (m % 60) + '分';
+    }
+    function device() {
+      var u = navigator.userAgent;
+      if (/iPhone/.test(u)) return 'iPhone';
+      if (/iPad|Macintosh/.test(u) && navigator.maxTouchPoints > 1) return 'iPad';
+      if (/Android/.test(u)) return /Mobile/.test(u) ? 'Androidスマホ' : 'Androidタブレット';
+      if (/Mac/.test(u)) return 'Mac';
+      if (/Windows/.test(u)) return 'Windows';
+      return 'そのほか';
+    }
+    function autoFields() {
+      var d = info || {};
+      var f = {};
+      f['テスター'] = tester || '（不明）';
+      var r = d.reached || '';
+      f['進んだところ'] = r === 'trial_end' ? '最後まで' : (CH[r] ? CH[r] + 'のとちゅう' : 'まだ始めていない');
+      var tt = d.times || [], total = 0;
+      f['遊んだ時間'] = tt.length ? tt.map(function (t) { total += t[1]; return t[0] + ' ' + fmt(t[1]) + (t[2] ? '' : '（とちゅう）'); }).join(' / ') + ' / 合計 ' + fmt(total) : '（記録なし）';
+      var h = d.heart || {};
+      f['ヒロインの気持ち'] = Object.keys(h).map(function (k) {
+        var v = h[k] || {};
+        return k + '：ときめき' + (v['ときめき'] || 0) + '・信頼' + (v['信頼'] || 0) + '・さみしさ' + (v['さみしさ'] || 0);
+      }).join(' / ') || '（記録なし）';
+      var b = d.belief || {};
+      f['選んだ傾向'] = Object.keys(b).map(function (k) { return k + ' ' + b[k]; }).join(' / ') || '（記録なし）';
+      f['バージョン'] = d.version || '';
+      f['端末'] = device();
+      return f;
+    }
+    var LABELS = { q1: '1.おもしろさ(5段階)', q2: '2.好きなキャラ', q3: '3.気になるヒロイン', q4: '4.退屈・長いところ',
+      q5: '5.わかりにくいところ', q6: '6.文章の読みやすさ', q7: '7.テンポ', q8: '8.絵と音', q9: '9.製品版を買う？',
+      q10: '10.1500円は？', q11: '11.自由に' };
+    function answers() {
+      var form = $('agSurveyForm'), out = {};
+      Object.keys(LABELS).forEach(function (q) {
+        var el = form.querySelector('[name=' + q + ']:checked') || form.querySelector('select[name=' + q + '], textarea[name=' + q + ']');
+        out[q] = el && el.type !== 'radio' ? el.value.trim() : (el ? el.value : '');
+      });
+      return out;
+    }
+    function saveDraft() { LS.set('anire_survey_draft', JSON.stringify(answers())); }
+    function loadDraft() {
+      var d; try { d = JSON.parse(LS.get('anire_survey_draft') || '{}'); } catch (e) { d = {}; }
+      var form = $('agSurveyForm');
+      Object.keys(d).forEach(function (q) {
+        var radio = form.querySelector('[name=' + q + '][value="' + String(d[q]).replace(/"/g, '') + '"]');
+        if (radio && radio.type === 'radio') { radio.checked = true; return; }
+        var el = form.querySelector('select[name=' + q + '], textarea[name=' + q + ']');
+        if (el) el.value = d[q];
+      });
+    }
+    function asText(a, f) {
+      var lines = ['【アンイレ テスト感想】'];
+      Object.keys(f).forEach(function (k) { lines.push(k + '：' + f[k]); });
+      Object.keys(LABELS).forEach(function (q) { lines.push(LABELS[q] + '：' + (a[q] || '')); });
+      return lines.join('\n');
+    }
+
+    window.anireSurvey = function (d) {
+      info = d || {};
+      var f = autoFields();
+      $('agAuto').textContent = Object.keys(f).map(function (k) { return k + '：' + f[k]; }).join('\n');
+      $('agSurveyForm').classList.remove('ag-hidden');
+      $('agThanks').classList.add('ag-hidden');
+      $('agSendErr').textContent = '';
+      loadDraft();
+      $('anireSurvey').classList.remove('ag-hidden');
+      $('anireSurvey').querySelector('.ag-card').scrollTop = 0;
+    };
+    function closeSurvey() {
+      saveDraft();
+      $('anireSurvey').classList.add('ag-hidden');
+      var c = document.getElementById('canvas');
+      if (c) c.focus();
+    }
+    $('agSurveyForm').addEventListener('input', saveDraft);
+    $('agSurveyForm').addEventListener('change', saveDraft);
+    $('agClose').addEventListener('click', closeSurvey);
+    $('agThanksClose').addEventListener('click', closeSurvey);
+
+    $('agSend').addEventListener('click', async function () {
+      var a = answers(), f = autoFields();
+      var filled = Object.keys(a).some(function (q) { return a[q]; });
+      if (!filled) { $('agSendErr').textContent = 'どれか1つでも答えてもらえるとうれしいです'; return; }
+      $('agSend').disabled = true;
+      $('agSend').textContent = '送信中…';
+      $('agSendErr').textContent = '';
+      var body = { access_key: KEY, subject: '【アンイレ】テスト感想 ' + f['テスター'] + '（' + f['進んだところ'] + '）', from_name: 'アンイレ テストページ' };
+      Object.keys(f).forEach(function (k) { body[k] = f[k]; });
+      Object.keys(LABELS).forEach(function (q) { body[LABELS[q]] = a[q] || '（空欄）'; });
+      try {
+        var r = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        var j = await r.json().catch(function () { return {}; });
+        if (!r.ok || !j.success) throw new Error(j.message || String(r.status));
+        LS.set('anire_survey_sent', String(Date.now()));
+        LS.del('anire_survey_draft');
+        $('agSurveyForm').classList.add('ag-hidden');
+        $('agThanks').classList.remove('ag-hidden');
+        $('anireSurvey').querySelector('.ag-card').scrollTop = 0;
+      } catch (e) {
+        $('agSendErr').textContent = '送れませんでした。電波のよいところで、もう一度押してみてください（' + e.message + '）';
+        $('agCopy').classList.remove('ag-hidden');
+      }
+      $('agSend').disabled = false;
+      $('agSend').textContent = '送信する';
+    });
+    $('agCopy').addEventListener('click', async function () {
+      var t = asText(answers(), autoFields());
+      try { await navigator.clipboard.writeText(t); $('agSendErr').textContent = 'コピーしました。LINE などに貼って送ってください'; }
+      catch (e) { $('agSendErr').textContent = 'コピーできませんでした。お手数ですが、画面を撮って送ってください'; }
+    });
+
+    start();
+  })();
+  </script>
+  <!-- /anire-testgate:body -->
+</body>
+
+</html>
