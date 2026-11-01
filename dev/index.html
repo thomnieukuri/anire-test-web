@@ -267,8 +267,105 @@
       }
   </script>
 
-
-
+<!-- anire-mobile -->
+<style>
+  /* 見えている高さにぴったり合わせる（iPhone の Safari は 100% だとツールバーのぶん下が見切れる） */
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
+  #canvas, #overlayDiv { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: var(--anm-h, 100dvh); }
+  #anm-rot, #anm-fs, #anm-a2hs-link { position: fixed; z-index: 50; font-family: sans-serif; display: none; }
+  #anm-rot { left: 0; right: 0; bottom: 18px; text-align: center; color: #ddd; font-size: 15px; line-height: 1.6; pointer-events: none; }
+  #anm-fs { right: 8px; top: 8px; padding: 7px 12px; border: 1px solid #888; border-radius: 6px; background: rgba(30,30,30,.85); color: #fff; font-size: 14px; }
+  #anm-a2hs-link { left: 0; right: 0; bottom: 52px; text-align: center; }
+  #anm-a2hs-link button { background: none; border: none; color: #9cc6ff; font-size: 14px; text-decoration: underline; }
+  #anm-a2hs { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.72); display: none; align-items: center; justify-content: center; font-family: sans-serif; }
+  #anm-a2hs .box { width: min(88vw, 460px); max-height: 86vh; overflow: auto; background: #fffdf6; color: #3c2d23; border-radius: 10px; padding: 20px 22px; box-sizing: border-box; font-size: 15px; line-height: 1.7; }
+  #anm-a2hs h2 { margin: 0 0 8px; font-size: 18px; color: #cd4646; }
+  #anm-a2hs ol { margin: 6px 0 10px; padding-left: 1.4em; }
+  #anm-a2hs .note { font-size: 13px; color: #8c735f; }
+  #anm-a2hs .close { position: sticky; bottom: 0; display: block; margin: 14px auto 0; padding: 8px 28px; border: none; border-radius: 6px; background: #3c2d23; color: #fff; font-size: 15px; }
+  @media (max-height: 500px) {
+    #anm-a2hs .box { max-height: 94vh; padding: 12px 18px; font-size: 13px; line-height: 1.55; }
+    #anm-a2hs h2 { font-size: 15px; margin-bottom: 4px; }
+    #anm-a2hs ol { margin: 4px 0 6px; }
+    #anm-a2hs .close { margin-top: 8px; padding: 6px 24px; }
+  }
+  @media (orientation: portrait) {
+    #anm-fs { top: auto; right: auto; left: 50%; transform: translateX(-50%); bottom: 90px; }
+  }
+</style>
+<div id="anm-rot">スマホを横にすると、画面が大きくなります</div>
+<button id="anm-fs" type="button">全画面</button>
+<div id="anm-a2hs-link"><button type="button">全画面で遊ぶには</button></div>
+<div id="anm-a2hs"><div class="box">
+  <h2>全画面で遊ぶには（iPhone）</h2>
+  iPhone の Safari では、ゲーム画面を全画面にできません。ホーム画面に追加して、そこから開くと、アドレスバーのない大きな画面で遊べます。
+  <ol>
+    <li>画面の下（または上）の共有ボタン（四角に上向きの矢印）を押す</li>
+    <li>「ホーム画面に追加」を押す</li>
+    <li>ホーム画面にできたアイコンから開いて、スマホを横にする</li>
+  </ol>
+  <div class="note">※ホーム画面から開くと、Safari とは別の保存場所になります。Safari で遊んだセーブや、入力した招待コードは引き継がれません。</div>
+  <button class="close" type="button">閉じる</button>
+</div></div>
+<script>
+(function () {
+  var ua = navigator.userAgent || "";
+  var isIOS = /iPhone|iPod/.test(ua);   // iPad は全画面の仕組みがあるので、Android と同じボタンを出す
+  var isTouch = (navigator.maxTouchPoints || 0) > 0 || "ontouchstart" in window;
+  var standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches);
+  var de = document.documentElement;
+  // 消音スイッチが入っていても音を鳴らす（iPhone の Safari 16.4 から。ほかのブラウザでは何もしない）
+  function audioPlayback() {
+    try { if (navigator.audioSession && navigator.audioSession.type !== "playback") { navigator.audioSession.type = "playback"; } } catch (e) {}
+  }
+  audioPlayback();
+  ["touchend", "pointerup", "click"].forEach(function (ev) { document.addEventListener(ev, audioPlayback, true); });
+  var canFS = !!(de.requestFullscreen || de.webkitRequestFullscreen) && !isIOS;
+  var rot = document.getElementById("anm-rot");
+  var fs = document.getElementById("anm-fs");
+  var link = document.getElementById("anm-a2hs-link");
+  var modal = document.getElementById("anm-a2hs");
+  function fit() {
+    var vv = window.visualViewport;
+    var h = vv ? vv.height : window.innerHeight;
+    de.style.setProperty("--anm-h", Math.round(h) + "px");
+    window.scrollTo(0, 0);
+  }
+  function inFS() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function portrait() { return window.innerHeight > window.innerWidth; }
+  function update() {
+    fit();
+    if (!isTouch) { return; }
+    rot.style.display = portrait() ? "block" : "none";
+    fs.style.display = (canFS && !inFS() && !standalone) ? "block" : "none";
+    link.style.display = (isIOS && !standalone && portrait()) ? "block" : "none";
+  }
+  fs.addEventListener("click", function () {
+    var p = de.requestFullscreen ? de.requestFullscreen() : de.webkitRequestFullscreen();
+    function lock() { try { screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape").catch(function () {}); } catch (e) {} }
+    if (p && p.then) { p.then(lock).catch(function () {}); } else { lock(); }
+    setTimeout(function () { var c = document.getElementById("canvas"); c && c.focus && c.focus(); }, 300);
+  });
+  function openGuide() { modal.style.display = "flex"; }
+  link.querySelector("button").addEventListener("click", openGuide);
+  modal.querySelector(".close").addEventListener("click", function () {
+    modal.style.display = "none";
+    try { localStorage.setItem("anire_a2hs_seen", "1"); } catch (e) {}
+  });
+  document.addEventListener("fullscreenchange", update);
+  document.addEventListener("webkitfullscreenchange", update);
+  window.addEventListener("resize", update);
+  if (window.visualViewport) { window.visualViewport.addEventListener("resize", update); }
+  window.addEventListener("orientationchange", function () { setTimeout(update, 300); });
+  update();
+  if (isIOS && !standalone) {
+    var seen = false;
+    try { seen = localStorage.getItem("anire_a2hs_seen") === "1"; } catch (e) {}
+    if (!seen) { setTimeout(openGuide, 1500); }
+  }
+})();
+</script>
+<!-- /anire-mobile -->
 
   <!-- anire-testgate:body -->
   <div id="anireGate" class="ag-wrap">
@@ -602,100 +699,6 @@
   })();
   </script>
   <!-- /anire-testgate:body -->
-
-<!-- anire-mobile -->
-<style>
-  /* 見えている高さにぴったり合わせる（iPhone の Safari は 100% だとツールバーのぶん下が見切れる） */
-  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
-  #canvas, #overlayDiv { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: var(--anm-h, 100dvh); }
-  #anm-rot, #anm-fs, #anm-a2hs-link { position: fixed; z-index: 50; font-family: sans-serif; display: none; }
-  #anm-rot { left: 0; right: 0; bottom: 18px; text-align: center; color: #ddd; font-size: 15px; line-height: 1.6; pointer-events: none; }
-  #anm-fs { right: 8px; top: 8px; padding: 7px 12px; border: 1px solid #888; border-radius: 6px; background: rgba(30,30,30,.85); color: #fff; font-size: 14px; }
-  #anm-a2hs-link { left: 0; right: 0; bottom: 52px; text-align: center; }
-  #anm-a2hs-link button { background: none; border: none; color: #9cc6ff; font-size: 14px; text-decoration: underline; }
-  #anm-a2hs { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.72); display: none; align-items: center; justify-content: center; font-family: sans-serif; }
-  #anm-a2hs .box { width: min(88vw, 460px); max-height: 86vh; overflow: auto; background: #fffdf6; color: #3c2d23; border-radius: 10px; padding: 20px 22px; box-sizing: border-box; font-size: 15px; line-height: 1.7; }
-  #anm-a2hs h2 { margin: 0 0 8px; font-size: 18px; color: #cd4646; }
-  #anm-a2hs ol { margin: 6px 0 10px; padding-left: 1.4em; }
-  #anm-a2hs .note { font-size: 13px; color: #8c735f; }
-  #anm-a2hs .close { position: sticky; bottom: 0; display: block; margin: 14px auto 0; padding: 8px 28px; border: none; border-radius: 6px; background: #3c2d23; color: #fff; font-size: 15px; }
-  @media (max-height: 500px) {
-    #anm-a2hs .box { max-height: 94vh; padding: 12px 18px; font-size: 13px; line-height: 1.55; }
-    #anm-a2hs h2 { font-size: 15px; margin-bottom: 4px; }
-    #anm-a2hs ol { margin: 4px 0 6px; }
-    #anm-a2hs .close { margin-top: 8px; padding: 6px 24px; }
-  }
-  @media (orientation: portrait) {
-    #anm-fs { top: auto; right: auto; left: 50%; transform: translateX(-50%); bottom: 90px; }
-  }
-</style>
-<div id="anm-rot">スマホを横にすると、画面が大きくなります</div>
-<button id="anm-fs" type="button">全画面</button>
-<div id="anm-a2hs-link"><button type="button">全画面で遊ぶには</button></div>
-<div id="anm-a2hs"><div class="box">
-  <h2>全画面で遊ぶには（iPhone）</h2>
-  iPhone の Safari では、ゲーム画面を全画面にできません。ホーム画面に追加して、そこから開くと、アドレスバーのない大きな画面で遊べます。
-  <ol>
-    <li>画面の下（または上）の共有ボタン（四角に上向きの矢印）を押す</li>
-    <li>「ホーム画面に追加」を押す</li>
-    <li>ホーム画面にできたアイコンから開いて、スマホを横にする</li>
-  </ol>
-  <div class="note">※ホーム画面から開くと、Safari とは別の保存場所になります。Safari で遊んだセーブや、入力した招待コードは引き継がれません。</div>
-  <button class="close" type="button">閉じる</button>
-</div></div>
-<script>
-(function () {
-  var ua = navigator.userAgent || "";
-  var isIOS = /iPhone|iPod/.test(ua);   // iPad は全画面の仕組みがあるので、Android と同じボタンを出す
-  var isTouch = (navigator.maxTouchPoints || 0) > 0 || "ontouchstart" in window;
-  var standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches);
-  var de = document.documentElement;
-  var canFS = !!(de.requestFullscreen || de.webkitRequestFullscreen) && !isIOS;
-  var rot = document.getElementById("anm-rot");
-  var fs = document.getElementById("anm-fs");
-  var link = document.getElementById("anm-a2hs-link");
-  var modal = document.getElementById("anm-a2hs");
-  function fit() {
-    var vv = window.visualViewport;
-    var h = vv ? vv.height : window.innerHeight;
-    de.style.setProperty("--anm-h", Math.round(h) + "px");
-    window.scrollTo(0, 0);
-  }
-  function inFS() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
-  function portrait() { return window.innerHeight > window.innerWidth; }
-  function update() {
-    fit();
-    if (!isTouch) { return; }
-    rot.style.display = portrait() ? "block" : "none";
-    fs.style.display = (canFS && !inFS() && !standalone) ? "block" : "none";
-    link.style.display = (isIOS && !standalone && portrait()) ? "block" : "none";
-  }
-  fs.addEventListener("click", function () {
-    var p = de.requestFullscreen ? de.requestFullscreen() : de.webkitRequestFullscreen();
-    function lock() { try { screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape").catch(function () {}); } catch (e) {} }
-    if (p && p.then) { p.then(lock).catch(function () {}); } else { lock(); }
-    setTimeout(function () { var c = document.getElementById("canvas"); c && c.focus && c.focus(); }, 300);
-  });
-  function openGuide() { modal.style.display = "flex"; }
-  link.querySelector("button").addEventListener("click", openGuide);
-  modal.querySelector(".close").addEventListener("click", function () {
-    modal.style.display = "none";
-    try { localStorage.setItem("anire_a2hs_seen", "1"); } catch (e) {}
-  });
-  document.addEventListener("fullscreenchange", update);
-  document.addEventListener("webkitfullscreenchange", update);
-  window.addEventListener("resize", update);
-  if (window.visualViewport) { window.visualViewport.addEventListener("resize", update); }
-  window.addEventListener("orientationchange", function () { setTimeout(update, 300); });
-  update();
-  if (isIOS && !standalone) {
-    var seen = false;
-    try { seen = localStorage.getItem("anire_a2hs_seen") === "1"; } catch (e) {}
-    if (!seen) { setTimeout(openGuide, 1500); }
-  }
-})();
-</script>
-<!-- /anire-mobile -->
 </body>
 
 </html>
