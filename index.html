@@ -272,7 +272,7 @@
   #canvas, #overlayDiv { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: var(--anm-h, 100dvh); }
   #anm-rot, #anm-fs, #anm-a2hs-link { position: fixed; z-index: 50; font-family: sans-serif; display: none; }
   #anm-rot { left: 0; right: 0; bottom: 18px; text-align: center; color: #ddd; font-size: 15px; line-height: 1.6; pointer-events: none; }
-  #anm-fs { right: 8px; top: 8px; padding: 7px 12px; border: 1px solid #888; border-radius: 6px; background: rgba(30,30,30,.85); color: #fff; font-size: 14px; }
+  #anm-fs { left: 50%; transform: translateX(-50%); top: 6px; padding: 5px 12px; border: 1px solid #888; border-radius: 6px; background: rgba(30,30,30,.7); color: #fff; font-size: 13px; }  /* v0.32.2：右上の「戻る・メニュー」の付箋と重ならないように、上のまん中へ */
   #anm-a2hs-link { left: 0; right: 0; bottom: 52px; text-align: center; }
   #anm-a2hs-link button { background: none; border: none; color: #9cc6ff; font-size: 14px; text-decoration: underline; }
   #anm-a2hs { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.72); display: none; align-items: center; justify-content: center; font-family: sans-serif; }
