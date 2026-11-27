@@ -249,7 +249,18 @@
 
 
 
+
 <!-- anire-pregrow -->
+<script>
+/* v0.44.7：スマホでは、ゲームの絵（canvas）を画面の細かさ（devicePixelRatio、3 など）そのままで描かず、
+   ゲームの大きさ（横 1280）に近い細かさで描く。描く点の数が 1/4〜1/5 になり、試合のボードなどのカクつきが減る
+   （ブラウザで測ると、スマホと同じ細かさで 1コマ 95ms → 27ms）。絵はもともと 1280×720 なので、見た目はほぼ変わらない */
+(function () { try {
+  var d = window.devicePixelRatio || 1;
+  var c = Math.min(d, Math.max(1, 1300 / Math.max(screen.width, screen.height)));
+  if (c < d) { Object.defineProperty(window, "devicePixelRatio", { get: function () { return c; }, configurable: true }); }
+} catch (e) {} })();
+</script>
 <script>
 /* v0.40.1：起動したときに、ゲームのメモリ（WebAssembly）を一度だけ広げておく（tools/web_mobile.py の説明を見る） */
 window.Module = window.Module || {};
@@ -645,6 +656,7 @@ Module.preRun.push(function () {
   })();
   </script>
   <!-- /anire-testgate:body -->
+
 
 
 
